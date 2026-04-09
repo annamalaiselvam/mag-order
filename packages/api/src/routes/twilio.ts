@@ -4,6 +4,7 @@ import { callManager } from "../lib/call-manager.js";
 import { db } from "../db/index.js";
 import { calls } from "../db/schema.js";
 import { eq } from "drizzle-orm";
+import { startVoiceAgent } from "../services/voice-agent.js";
 
 export async function twilioRoutes(app: FastifyInstance) {
   // TwiML webhook: handles inbound calls from Twilio
@@ -31,7 +32,7 @@ export async function twilioRoutes(app: FastifyInstance) {
     // Respond with TwiML to connect to WebSocket media stream
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Joanna">Welcome to Mag Order. I'll help you place your order. Please go ahead and tell me what you'd like.</Say>
+  <Say voice="Polly.Joanna">Welcome to A2B Indian Veg Restaurant. I'll help you place your order. Please go ahead and tell me what you'd like.</Say>
   <Connect>
     <Stream url="wss://${request.hostname}/twilio/media-stream">
       <Parameter name="callSid" value="${callSid}" />
@@ -98,12 +99,15 @@ export async function twilioRoutes(app: FastifyInstance) {
                 }
               }
 
-              // Emit event for voice agent pipeline to pick up
+              // Start voice agent pipeline
               callManager.emit("audio:stream-start", {
                 callSid,
                 streamSid,
                 socket,
               });
+              if (callSid) {
+                startVoiceAgent(callSid, socket as any);
+              }
               break;
             }
 

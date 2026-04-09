@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import WebSocket from "ws";
 
 /**
  * Speech-to-Text service using Deepgram.
@@ -16,41 +17,47 @@ export class SpeechToText extends EventEmitter {
 
   async connect(): Promise<void> {
     const url =
-      "wss://api.deepgram.com/v1/listen?encoding=mulaw&sample_rate=8000&channels=1&model=nova-2&punctuate=true&interim_results=true&endpointing=300&utterance_end_ms=1000";
+      "wss://api.deepgram.com/v1/listen?encoding=mulaw&sample_rate=8000&channels=1&model=nova-2&punctuate=true&interim_results=true&endpointing=200&utterance_end_ms=1000";
 
     this.ws = new WebSocket(url, {
       headers: { Authorization: `Token ${this.apiKey}` },
-    } as any);
+    });
 
-    this.ws.onopen = () => this.emit("connected");
+    this.ws.on("open", () => this.emit("connected"));
 
-    this.ws.onmessage = (event: MessageEvent) => {
+    let lastFinalTranscript = "";
+
+    this.ws.on("message", (data: Buffer) => {
       try {
-        const data = JSON.parse(
-          typeof event.data === "string" ? event.data : event.data.toString()
-        );
+        const parsed = JSON.parse(data.toString());
+        const transcript = parsed.channel?.alternatives?.[0]?.transcript || "";
 
-        if (data.type === "Results") {
-          const transcript =
-            data.channel?.alternatives?.[0]?.transcript || "";
-          const isFinal = data.is_final;
-          const speechFinal = data.speech_final;
-
-          if (transcript) {
-            this.emit("transcript", { transcript, isFinal, speechFinal });
+        if (parsed.type === "Results") {
+          // Accumulate final segments
+          if (parsed.is_final && transcript) {
+            lastFinalTranscript = transcript;
+          }
+          // Fire immediately if speech_final
+          if (parsed.speech_final && transcript) {
+            this.emit("transcript", { transcript, isFinal: true, speechFinal: true });
+            lastFinalTranscript = "";
           }
         }
 
-        if (data.type === "UtteranceEnd") {
-          this.emit("utterance-end");
+        // UtteranceEnd = silence detected, flush whatever we have
+        if (parsed.type === "UtteranceEnd") {
+          if (lastFinalTranscript) {
+            this.emit("transcript", { transcript: lastFinalTranscript, isFinal: true, speechFinal: true });
+            lastFinalTranscript = "";
+          }
         }
       } catch (err) {
         this.emit("error", err);
       }
-    };
+    });
 
-    this.ws.onerror = (err: Event) => this.emit("error", err);
-    this.ws.onclose = () => this.emit("disconnected");
+    this.ws.on("error", (err) => this.emit("error", err));
+    this.ws.on("close", () => this.emit("disconnected"));
   }
 
   sendAudio(base64Audio: string): void {

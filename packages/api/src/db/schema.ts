@@ -11,13 +11,6 @@ import {
   date,
 } from "drizzle-orm/pg-core";
 
-export const menuCategoryEnum = pgEnum("menu_category", [
-  "appetizers",
-  "mains",
-  "drinks",
-  "desserts",
-]);
-
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "confirmed",
@@ -49,7 +42,7 @@ export const menuItems = pgTable("menu_items", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  category: menuCategoryEnum("category").notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
   available: boolean("available").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -60,7 +53,7 @@ export const orders = pgTable("orders", {
   status: orderStatusEnum("status").default("pending").notNull(),
   total: numeric("total", { precision: 10, scale: 2 }),
   notes: text("notes"),
-  callerPhone: varchar("caller_phone", { length: 20 }),
+  callerPhone: varchar("caller_phone", { length: 100 }),
   callSid: varchar("call_sid", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -104,7 +97,7 @@ export const reservations = pgTable("reservations", {
 export const calls = pgTable("calls", {
   id: uuid("id").defaultRandom().primaryKey(),
   callSid: varchar("call_sid", { length: 64 }).unique().notNull(),
-  callerPhone: varchar("caller_phone", { length: 20 }),
+  callerPhone: varchar("caller_phone", { length: 100 }),
   status: callStatusEnum("status").default("ringing").notNull(),
   orderId: uuid("order_id").references(() => orders.id),
   startedAt: timestamp("started_at").defaultNow().notNull(),

@@ -13,8 +13,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.86.1",
     "@fastify/cors": "^10.0.0",
     "@fastify/formbody": "^8.0.0",
+    "@fastify/static": "^9.1.0",
     "@fastify/websocket": "^11.0.0",
     "dotenv": "^16.4.0",
     "drizzle-orm": "^0.38.0",
