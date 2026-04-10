@@ -1,0 +1,1 @@
+ALTER TABLE "reservations" ALTER COLUMN "guest_phone" SET DATA TYPE varchar(64);

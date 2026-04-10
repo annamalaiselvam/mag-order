@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
-import { orders, orderItems, menuItems } from "../db/schema.js";
+import { orders, orderItems, menuItems, reservations } from "../db/schema.js";
 import { eq, desc } from "drizzle-orm";
 
 export async function orderRoutes(app: FastifyInstance) {
@@ -17,17 +17,9 @@ export async function orderRoutes(app: FastifyInstance) {
   });
 
   app.get<{ Params: { id: string } }>("/api/orders/:id", async (request) => {
-    const [order] = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.id, request.params.id));
+    const [order] = await db.select().from(orders).where(eq(orders.id, request.params.id));
     if (!order) throw { statusCode: 404, message: "Order not found" };
-
-    const items = await db
-      .select()
-      .from(orderItems)
-      .where(eq(orderItems.orderId, order.id));
-
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
     return { ...order, items };
   });
 
@@ -43,4 +35,9 @@ export async function orderRoutes(app: FastifyInstance) {
       return updated;
     }
   );
+
+  // Reservations
+  app.get("/api/reservations", async () => {
+    return db.select().from(reservations).orderBy(desc(reservations.createdAt));
+  });
 }

@@ -23,4 +23,9 @@ export async function tokenRoutes(app: FastifyInstance) {
 
     reply.send({ token: token.toJwt() });
   });
+
+  // Expose phone number so UI can show "Call us" option
+  app.get("/api/phone", async (_request, reply) => {
+    reply.send({ phone: config.twilio.phoneNumber });
+  });
 }

@@ -53,6 +53,7 @@ export const orders = pgTable("orders", {
   status: orderStatusEnum("status").default("pending").notNull(),
   total: numeric("total", { precision: 10, scale: 2 }),
   notes: text("notes"),
+  customerName: varchar("customer_name", { length: 255 }),
   callerPhone: varchar("caller_phone", { length: 100 }),
   callSid: varchar("call_sid", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -81,16 +82,16 @@ export const tables = pgTable("tables", {
 
 export const reservations = pgTable("reservations", {
   id: uuid("id").defaultRandom().primaryKey(),
-  tableId: uuid("table_id")
-    .references(() => tables.id)
-    .notNull(),
+  tableId: uuid("table_id").references(() => tables.id),
   guestName: varchar("guest_name", { length: 255 }).notNull(),
-  guestPhone: varchar("guest_phone", { length: 20 }).notNull(),
+  guestPhone: varchar("guest_phone", { length: 64 }).notNull(),
   partySize: integer("party_size").notNull(),
   date: date("date").notNull(),
   timeSlot: varchar("time_slot", { length: 10 }).notNull(),
   durationMinutes: integer("duration_minutes").default(90).notNull(),
   status: reservationStatusEnum("status").default("pending").notNull(),
+  notes: text("notes"),
+  callSid: varchar("call_sid", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

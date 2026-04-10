@@ -7,18 +7,29 @@ import { eq } from "drizzle-orm";
 import { startVoiceAgent } from "../services/voice-agent.js";
 
 export async function twilioRoutes(app: FastifyInstance) {
-  // TwiML webhook: handles inbound calls from Twilio
+  // TwiML webhook: handles calls from Twilio (browser SDK)
   app.post("/twilio/voice", async (request, reply) => {
     const body = request.body as Record<string, string>;
     const callSid = body.CallSid;
     const callerPhone = body.From || "unknown";
+    const to = body.To || "";
+    const callType = body.callType || "agent"; // "agent" or "direct"
 
-    app.log.info({ callSid, callerPhone }, "Inbound call received");
+    app.log.info({ callSid, callerPhone, to, callType }, "Call received");
 
-    // Create call session
+    // Direct PSTN call — just dial the number
+    if (callType === "direct") {
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial callerId="${config.twilio.phoneNumber}">${to}</Dial>
+</Response>`;
+      reply.type("text/xml").send(twiml);
+      return;
+    }
+
+    // Voice agent flow
     callManager.createSession(callSid, callerPhone);
 
-    // Store call in database
     try {
       await db.insert(calls).values({
         callSid,
@@ -29,10 +40,8 @@ export async function twilioRoutes(app: FastifyInstance) {
       app.log.error({ err, callSid }, "Failed to store call record");
     }
 
-    // Respond with TwiML to connect to WebSocket media stream
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Joanna">Welcome to A2B Indian Veg Restaurant. I'll help you place your order. Please go ahead and tell me what you'd like.</Say>
   <Connect>
     <Stream url="wss://${request.hostname}/twilio/media-stream">
       <Parameter name="callSid" value="${callSid}" />

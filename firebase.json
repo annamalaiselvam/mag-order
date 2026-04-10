@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "public": "packages/web/dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      { "source": "/api/**",    "run": { "serviceId": "a2b-api", "region": "us-central1" } },
+      { "source": "/twilio/**", "run": { "serviceId": "a2b-api", "region": "us-central1" } },
+      { "source": "/health",    "run": { "serviceId": "a2b-api", "region": "us-central1" } },
+      { "source": "**",         "destination": "/index.html" }
+    ]
+  }
+}

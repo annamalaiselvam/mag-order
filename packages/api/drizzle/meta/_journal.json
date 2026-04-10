@@ -22,6 +22,20 @@
       "when": 1775694762175,
       "tag": "0002_bitter_maestro",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775709080217,
+      "tag": "0003_omniscient_mordo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775732880503,
+      "tag": "0004_moaning_zombie",
+      "breakpoints": true
     }
   ]
 }
